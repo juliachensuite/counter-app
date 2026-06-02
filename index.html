@@ -193,7 +193,7 @@
         if (p.shape === "flame") {
           ctx.globalCompositeOperation = "lighter"; // additive glow
           ctx.beginPath();
-          ctx.arc(0, 0, (p.size / 2) * p.life, 0, Math.PI * 2);
+          ctx.arc(0, 0, Math.max(0, (p.size / 2) * p.life), 0, Math.PI * 2);
           ctx.fill();
         } else if (p.shape === "circle") {
           ctx.beginPath();
