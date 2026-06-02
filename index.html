@@ -118,6 +118,10 @@
       }
     }
 
+    // When > now, the whole screen is engulfed in flames (timestamp in ms).
+    let flamesUntil = 0;
+    const flameColors = ["#ff2200", "#ff4400", "#ff7700", "#ffaa00", "#ffdd33"];
+
     function explosion() {
       document.body.classList.remove("shake");
       void document.body.offsetWidth; // restart animation
@@ -141,10 +145,40 @@
           shape: "circle"
         });
       }
+      // ...then the whole screen bursts into flames for 3 seconds.
+      flamesUntil = performance.now() + 3000;
+    }
+
+    // Spawn a batch of rising flame particles along the bottom edge.
+    function spawnFlames() {
+      for (let i = 0; i < 26; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: canvas.height + 10,
+          vx: (Math.random() - 0.5) * 3,
+          vy: -(Math.random() * 9 + 7),
+          size: Math.random() * 40 + 20,
+          color: flameColors[Math.floor(Math.random() * flameColors.length)],
+          rot: 0,
+          vrot: 0,
+          gravity: 0.12,
+          life: 1,
+          decay: 0.022,
+          shape: "flame"
+        });
+      }
     }
 
     function tick() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (performance.now() < flamesUntil) {
+        spawnFlames();
+        // warm flickering glow over the whole screen while it burns
+        ctx.fillStyle = "rgba(255, 90, 0, " + (0.12 + Math.random() * 0.08) + ")";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
       particles = particles.filter((p) => p.life > 0);
       for (const p of particles) {
         p.x += p.vx;
@@ -156,7 +190,12 @@
         ctx.globalAlpha = Math.max(p.life, 0);
         ctx.fillStyle = p.color;
         ctx.translate(p.x, p.y);
-        if (p.shape === "circle") {
+        if (p.shape === "flame") {
+          ctx.globalCompositeOperation = "lighter"; // additive glow
+          ctx.beginPath();
+          ctx.arc(0, 0, (p.size / 2) * p.life, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.shape === "circle") {
           ctx.beginPath();
           ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
           ctx.fill();
