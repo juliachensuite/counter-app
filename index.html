@@ -23,19 +23,45 @@
     #result { font-size: 160px; font-weight: bold; margin-bottom: 20px; line-height: 1; }
     .buttons { display: flex; gap: 12px; }
     button {
-      font-size: 48px;
-      padding: 36px 64px;
+      font-size: 24px;
+      padding: 18px 32px;
       border: none;
-      border-radius: 24px;
+      border-radius: 16px;
       cursor: pointer;
       background: #0f3460;
       color: #fff;
     }
     button:hover { background: #16529e; }
     button:active { transform: scale(0.96); }
-    .range-control { margin-top: 36px; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 80%; max-width: 360px; }
+    .range-control { margin-top: 36px; display: flex; flex-direction: column; align-items: center; gap: 12px; width: 80%; max-width: 360px; }
     .range-control label { font-size: 16px; opacity: 0.85; }
-    .range-control input { width: 100%; }
+
+    /* dual-handle range slider: two inputs sharing one track */
+    .dual { position: relative; width: 100%; height: 40px; }
+    .dual .track, .dual .track-fill {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      height: 6px; border-radius: 3px;
+    }
+    .dual .track { left: 0; right: 0; background: rgba(255, 255, 255, 0.3); }
+    .dual .track-fill { background: #fff; }
+    .dual input[type=range] {
+      position: absolute; top: 0; left: 0; width: 100%; height: 40px;
+      margin: 0; background: none; pointer-events: none;  /* track inert */
+      -webkit-appearance: none; appearance: none;
+    }
+    .dual input[type=range]::-webkit-slider-runnable-track { background: none; }
+    .dual input[type=range]::-moz-range-track { background: none; }
+    /* bigger knobs, and only the knob is grabbable */
+    .dual input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: pointer;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #fff; border: 4px solid #0f3460; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+    .dual input[type=range]::-moz-range-thumb {
+      pointer-events: auto; cursor: pointer;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #fff; border: 4px solid #0f3460; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
     /* canvas sits on top of everything for the particle effects */
     #fx { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
     @keyframes shake {
@@ -54,30 +80,58 @@
     <button id="generate" onclick="generate()">Generate</button>
   </div>
   <div class="range-control">
-    <label for="max">Maximum: <span id="maxLabel">100</span></label>
-    <input type="range" id="max" min="1" max="100" value="100">
+    <label>Range: <span id="rangeLabel">1 – 100</span></label>
+    <div class="dual" id="dual">
+      <div class="track"></div>
+      <div class="track-fill" id="trackFill"></div>
+      <input type="range" id="min" min="1" max="100" value="1">
+      <input type="range" id="max" min="1" max="100" value="100">
+    </div>
   </div>
 
   <canvas id="fx"></canvas>
 
   <script>
     const result = document.getElementById("result");
+    const minSlider = document.getElementById("min");
     const maxSlider = document.getElementById("max");
-    const maxLabel = document.getElementById("maxLabel");
+    const rangeLabel = document.getElementById("rangeLabel");
+    const trackFill = document.getElementById("trackFill");
 
-    // Load saved maximum, or fall back to default
-    let max = Number(localStorage.getItem("max")) || 100;
+    const SLIDER_MIN = 1, SLIDER_MAX = 100;
+
+    // Load saved bounds, or fall back to defaults
+    let min = Number(localStorage.getItem("min")) || SLIDER_MIN;
+    let max = Number(localStorage.getItem("max")) || SLIDER_MAX;
+    minSlider.value = min;
     maxSlider.value = max;
-    maxLabel.textContent = max;
+
+    function updateUI() {
+      const span = SLIDER_MAX - SLIDER_MIN;
+      trackFill.style.left = ((min - SLIDER_MIN) / span) * 100 + "%";
+      trackFill.style.width = ((max - min) / span) * 100 + "%";
+      rangeLabel.textContent = min + " – " + max;
+    }
+    updateUI();
+
+    minSlider.addEventListener("input", () => {
+      min = Number(minSlider.value);
+      if (min > max) { min = max; minSlider.value = min; }  // handles can't cross
+      localStorage.setItem("min", min);
+      minSlider.style.zIndex = 5; maxSlider.style.zIndex = 4;  // last-touched on top
+      updateUI();
+    });
 
     maxSlider.addEventListener("input", () => {
       max = Number(maxSlider.value);
-      maxLabel.textContent = max;
+      if (max < min) { max = min; maxSlider.value = max; }  // handles can't cross
       localStorage.setItem("max", max);
+      maxSlider.style.zIndex = 5; minSlider.style.zIndex = 4;
+      updateUI();
     });
 
     function generate() {
-      const n = Math.floor(Math.random() * max) + 1;  // 1..max inclusive
+      const n = Math.floor(Math.random() * (max - min + 1)) + min;  // min..max inclusive
       result.textContent = n;
       if (n === 7) {
         explosion();
