@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Counter</title>
+  <style>
+    body {
+      font-family: -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #1a1a2e;
+      color: #fff;
+    }
+    #count { font-size: 96px; font-weight: bold; margin-bottom: 20px; }
+    .buttons { display: flex; gap: 12px; }
+    button {
+      font-size: 24px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #0f3460;
+      color: #fff;
+    }
+    button:hover { background: #16529e; }
+  </style>
+</head>
+<body>
+  <div id="count">0</div>
+  <div class="buttons">
+    <button onclick="change(-1)">−</button>
+    <button onclick="reset()">Reset</button>
+    <button onclick="change(1)">+</button>
+  </div>
+
+  <script>
+    let count = 0;
+    const display = document.getElementById("count");
+
+    function change(amount) {
+      count += amount;
+      display.textContent = count;
+    }
+
+    function reset() {
+      count = 0;
+      display.textContent = count;
+    }
+  </script>
+</body>
+</html>
