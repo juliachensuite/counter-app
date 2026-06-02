@@ -1,4 +1,4 @@
-const CACHE = "counter-v2";
+const CACHE = "counter-v3";
 const FILES = ["./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
